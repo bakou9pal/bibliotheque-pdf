@@ -1,0 +1,29 @@
+```html
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>Ajouter un PDF</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <h1>Ajout d'un nouveau fichier PDF</h1>
+    <form action="" method="post" enctype="multipart/form-data">
+        <label>Fichier PDF : <input type="file" name="file" required></label><br>
+        <label>Dossier cible (optionnel) : <input type="text" name="folder"></label><br>
+        <input type="submit" value="Envoyer">
+    </form>
+    {% with messages = get_flashed_messages() %}
+      {% if messages %}
+        <ul class="flash">
+        {% for message in messages %}
+          <li>{{ message }}</li>
+        {% endfor %}
+        </ul>
+      {% endif %}
+    {% endwith %}
+</body>
+</html>
+```
+
+---

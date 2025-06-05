@@ -1,0 +1,36 @@
+```html
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8" />
+    <title>Bibliothèque PDF</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}" />
+</head>
+<body>
+    <header>
+        <div class="logo-container">
+            <img class="logo" src="{{ url_for('static', filename='img/logo.png') }}" alt="Logo" />
+        </div>
+        <h1>Bibliothèque PDF</h1>
+        <nav>
+            <a href="{{ url_for('upload') }}">Ajouter un PDF</a> |
+            <a href="{{ url_for('moderation') }}">Modération</a>
+        </nav>
+    </header>
+
+    <main>
+        {% for dossier in dossiers %}
+            <section>
+                <h2>{{ dossier if dossier else "Racine" }}</h2>
+                <ul>
+                    {% for fichier in fichiers_par_dossier[dossier] %}
+                        <li>
+                            <a href="{{ url_for('pdf', filename=dossier + '/' + fichier if dossier else fichier) }}" target="_blank">{{ fichier }}</a>
+                        </li>
+                    {% endfor %}
+                </ul>
+            </section>
+        {% endfor %}
+    </main>
+</body>
+</html>
