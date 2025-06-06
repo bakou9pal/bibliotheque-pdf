@@ -73,7 +73,7 @@ def moderation():
     if not session.get("moderateur"):
         if request.method == "POST":
             mdp = request.form.get("password")
-            if mdp == "admin123":  # 🔐 À personnaliser
+            if mdp == "sardaukar":  # 🔐 À personnaliser
                 session["moderateur"] = True
                 return redirect(url_for("moderation"))
             else:
