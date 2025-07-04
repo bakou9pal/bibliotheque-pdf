@@ -78,11 +78,13 @@ def moderation():
                 fichiers_valides.append(os.path.relpath(os.path.join(root, f), PDF_DIR))
     fichiers_valides.sort(key=lambda f: os.path.getmtime(os.path.join(PDF_DIR, f)), reverse=True)
 
-    dossiers_existants = set()
-    for root, _, _ in os.walk(PENDING_DIR):
-        rel_path = os.path.relpath(root, PENDING_DIR)
-        if rel_path != ".":
-            dossiers_existants.add(rel_path)
+    # Afficher les dossiers de PDF_DIR (catégories)
+    dossiers_existants = []
+    for root, dirs, _ in os.walk(PDF_DIR):
+        for d in dirs:
+            rel_path = os.path.relpath(os.path.join(root, d), PDF_DIR)
+            if rel_path != ".":
+                dossiers_existants.append(rel_path)
     dossiers_tries = sorted(dossiers_existants, key=lambda x: x.lower())
 
     return render_template("moderation.html", 
@@ -131,19 +133,24 @@ def modifier_fichier():
     new_folder_custom = request.form.get("new_folder_custom", "").strip()
     valid_file = request.form.get("valid_file") == "1"
     base_dir = PDF_DIR if valid_file else PENDING_DIR
+
     if not old_filename or not new_name:
         flash("Nom invalide.")
         return redirect(url_for("moderation"))
+
     final_folder = new_folder_custom if new_folder_custom else new_folder
     if not re.match(r'^[\w\-\s]+$', new_name):
         flash("Caractères interdits dans le nom.")
         return redirect(url_for("moderation"))
+
     src = os.path.join(base_dir, old_filename)
     new_rel_path = os.path.join(final_folder, new_name + ".pdf") if final_folder else new_name + ".pdf"
     dst = os.path.join(base_dir, new_rel_path)
+
     if os.path.exists(dst):
         flash("Un fichier avec ce nom existe déjà.")
         return redirect(url_for("moderation"))
+
     os.makedirs(os.path.dirname(dst), exist_ok=True)
     shutil.move(src, dst)
     flash(f"Modifié : {old_filename} → {new_rel_path}")
