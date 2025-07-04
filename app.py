@@ -2,7 +2,6 @@ from flask import Flask, render_template, request, redirect, url_for, send_from_
 import os
 import re
 import shutil
-from datetime import datetime
 
 app = Flask(__name__)
 app.secret_key = os.environ.get('FLASK_SECRET_KEY', 'dev_secret_key')
@@ -11,17 +10,17 @@ app.secret_key = os.environ.get('FLASK_SECRET_KEY', 'dev_secret_key')
 PDF_DIR = os.path.join(app.static_folder, "pdf")
 PENDING_DIR = os.path.join(os.getcwd(), "uploads_pending")
 
-# Création des dossiers
+# Création des dossiers au démarrage
 os.makedirs(PDF_DIR, exist_ok=True)
 os.makedirs(PENDING_DIR, exist_ok=True)
 
-# Tri nature
+# Tri naturel
 def trier_naturellement(nom):
     return [int(s) if s.isdigit() else s.lower() for s in re.split(r'(\d+)', nom)]
 
 # Tri par date
-def trier_par_date(liste_fichiers, base_dir):
-    return sorted(liste_fichiers, key=lambda f: os.path.getmtime(os.path.join(base_dir, f)), reverse=True)
+def trier_par_date(fichiers, base_dir):
+    return sorted(fichiers, key=lambda f: os.path.getmtime(os.path.join(base_dir, f)), reverse=True)
 
 @app.route("/")
 def index():
@@ -78,15 +77,34 @@ def moderation():
                 flash("Mot de passe incorrect.")
         return render_template("login.html")
 
-    fichiers_en_attente = []
+    # Fichiers en attente
+    fichiers_pending = []
     for root, _, files in os.walk(PENDING_DIR):
         for f in files:
             if f.endswith(".pdf"):
                 chemin_relatif = os.path.relpath(os.path.join(root, f), PENDING_DIR)
-                fichiers_en_attente.append(chemin_relatif)
+                fichiers_pending.append(chemin_relatif)
 
-    fichiers_en_attente.sort(key=lambda x: os.path.getmtime(os.path.join(PENDING_DIR, x)), reverse=True)
-    return render_template("moderation.html", fichiers=fichiers_en_attente)
+    fichiers_pending.sort(key=lambda x: os.path.getmtime(os.path.join(PENDING_DIR, x)), reverse=True)
+
+    # Fichiers validés
+    fichiers_valides = []
+    for root, _, files in os.walk(PDF_DIR):
+        for f in files:
+            if f.endswith(".pdf"):
+                chemin_relatif = os.path.relpath(os.path.join(root, f), PDF_DIR)
+                fichiers_valides.append(chemin_relatif)
+
+    fichiers_valides.sort(key=lambda x: os.path.getmtime(os.path.join(PDF_DIR, x)), reverse=True)
+
+    # Tous les dossiers existants pour menu déroulant
+    dossiers_existants = set()
+    for root, dirs, _ in os.walk(PENDING_DIR):
+        for d in dirs:
+            rel = os.path.relpath(os.path.join(root, d), PENDING_DIR)
+            dossiers_existants.add(rel)
+
+    return render_template("moderation.html", fichiers_pending=fichiers_pending, fichiers_valides=fichiers_valides, dossiers=dossiers_existants)
 
 @app.route("/valider/<path:filename>")
 def valider(filename):
@@ -96,8 +114,13 @@ def valider(filename):
     src = os.path.join(PENDING_DIR, filename)
     dst = os.path.join(PDF_DIR, filename)
     os.makedirs(os.path.dirname(dst), exist_ok=True)
-    shutil.move(src, dst)
-    flash(f"Fichier {filename} validé.")
+
+    try:
+        shutil.move(src, dst)
+        flash(f"Fichier {filename} validé.")
+    except Exception as e:
+        flash(f"Erreur lors du déplacement : {e}")
+
     return redirect(url_for("moderation"))
 
 @app.route("/supprimer/<path:filename>")
@@ -109,6 +132,8 @@ def supprimer(filename):
     if os.path.exists(chemin):
         os.remove(chemin)
         flash(f"Fichier {filename} supprimé.")
+    else:
+        flash("Fichier introuvable.")
     return redirect(url_for("moderation"))
 
 @app.route("/modifier_fichier", methods=["POST"])
@@ -117,29 +142,37 @@ def modifier_fichier():
         return redirect(url_for("moderation"))
 
     old_filename = request.form.get("old_filename")
-    new_name = request.form.get("new_name").strip()
-    new_folder = request.form.get("new_folder").strip()
+    new_name = request.form.get("new_name", "").strip()
+    new_folder = request.form.get("new_folder", "").strip()
+    new_folder_custom = request.form.get("new_folder_custom", "").strip()
+    valid_file = request.form.get("valid_file") == "1"
+
+    base_dir = PDF_DIR if valid_file else PENDING_DIR
 
     if not old_filename or not new_name:
         flash("Nom de fichier invalide.")
         return redirect(url_for("moderation"))
 
+    # Dossier final prioritaire : personnalisé > sélection
+    final_folder = new_folder_custom if new_folder_custom else new_folder
+
+    # Sécurité sur le nom
     if not re.match(r'^[\w\-\s]+$', new_name):
         flash("Le nom contient des caractères invalides.")
         return redirect(url_for("moderation"))
 
-    old_path = os.path.join(PENDING_DIR, old_filename)
-    new_rel_path = os.path.join(new_folder, new_name + ".pdf") if new_folder else new_name + ".pdf"
-    new_path = os.path.join(PENDING_DIR, new_rel_path)
+    src = os.path.join(base_dir, old_filename)
+    new_rel_path = os.path.join(final_folder, new_name + ".pdf") if final_folder else new_name + ".pdf"
+    dst = os.path.join(base_dir, new_rel_path)
 
-    if os.path.exists(new_path):
+    if os.path.exists(dst):
         flash("Un fichier avec ce nom existe déjà.")
         return redirect(url_for("moderation"))
 
-    os.makedirs(os.path.dirname(new_path), exist_ok=True)
+    os.makedirs(os.path.dirname(dst), exist_ok=True)
 
     try:
-        shutil.move(old_path, new_path)
+        shutil.move(src, dst)
         flash(f"Fichier modifié : {old_filename} → {new_rel_path}")
     except Exception as e:
         flash(f"Erreur lors du renommage : {e}")
