@@ -5,13 +5,13 @@ import shutil
 from datetime import datetime
 
 app = Flask(__name__)
-app.secret_key = 'change_ceci_par_un_secret_vraiment_securise'
+app.secret_key = os.environ.get('FLASK_SECRET_KEY', 'dev_secret_key')
 
 # Répertoires
 PDF_DIR = os.path.join(app.static_folder, "pdf")
 PENDING_DIR = os.path.join(os.getcwd(), "uploads_pending")
 
-# Création des dossiers s'ils n'existent pas
+# Création des dossiers
 os.makedirs(PDF_DIR, exist_ok=True)
 os.makedirs(PENDING_DIR, exist_ok=True)
 
@@ -19,7 +19,7 @@ os.makedirs(PENDING_DIR, exist_ok=True)
 def trier_naturellement(nom):
     return [int(s) if s.isdigit() else s.lower() for s in re.split(r'(\d+)', nom)]
 
-# Tri par date de modification
+# Tri par date
 def trier_par_date(liste_fichiers, base_dir):
     return sorted(liste_fichiers, key=lambda f: os.path.getmtime(os.path.join(base_dir, f)), reverse=True)
 
@@ -37,7 +37,6 @@ def index():
             fichiers_par_dossier[rel_path] = fichiers_pdf
 
     dossiers_tries = sorted(fichiers_par_dossier.keys(), key=trier_naturellement)
-
     return render_template("index.html", dossiers=dossiers_tries, fichiers_par_dossier=fichiers_par_dossier)
 
 @app.route("/pdf/<path:filename>")
@@ -57,7 +56,6 @@ def upload():
         if fichier and fichier.filename.endswith(".pdf"):
             dossier_path = os.path.join(PENDING_DIR, dossier) if dossier else PENDING_DIR
             os.makedirs(dossier_path, exist_ok=True)
-
             chemin_fichier = os.path.join(dossier_path, fichier.filename)
             fichier.save(chemin_fichier)
             flash("Fichier uploadé, en attente de validation.")
@@ -73,7 +71,7 @@ def moderation():
     if not session.get("moderateur"):
         if request.method == "POST":
             mdp = request.form.get("password")
-            if mdp == "sardaukar":  # 🔐 À personnaliser
+            if mdp == os.environ.get("MODERATION_PASSWORD", "sardaukar"):
                 session["moderateur"] = True
                 return redirect(url_for("moderation"))
             else:
@@ -88,7 +86,6 @@ def moderation():
                 fichiers_en_attente.append(chemin_relatif)
 
     fichiers_en_attente.sort(key=lambda x: os.path.getmtime(os.path.join(PENDING_DIR, x)), reverse=True)
-
     return render_template("moderation.html", fichiers=fichiers_en_attente)
 
 @app.route("/valider/<path:filename>")
@@ -99,7 +96,6 @@ def valider(filename):
     src = os.path.join(PENDING_DIR, filename)
     dst = os.path.join(PDF_DIR, filename)
     os.makedirs(os.path.dirname(dst), exist_ok=True)
-
     shutil.move(src, dst)
     flash(f"Fichier {filename} validé.")
     return redirect(url_for("moderation"))
@@ -115,6 +111,41 @@ def supprimer(filename):
         flash(f"Fichier {filename} supprimé.")
     return redirect(url_for("moderation"))
 
+@app.route("/modifier_fichier", methods=["POST"])
+def modifier_fichier():
+    if not session.get("moderateur"):
+        return redirect(url_for("moderation"))
+
+    old_filename = request.form.get("old_filename")
+    new_name = request.form.get("new_name").strip()
+    new_folder = request.form.get("new_folder").strip()
+
+    if not old_filename or not new_name:
+        flash("Nom de fichier invalide.")
+        return redirect(url_for("moderation"))
+
+    if not re.match(r'^[\w\-\s]+$', new_name):
+        flash("Le nom contient des caractères invalides.")
+        return redirect(url_for("moderation"))
+
+    old_path = os.path.join(PENDING_DIR, old_filename)
+    new_rel_path = os.path.join(new_folder, new_name + ".pdf") if new_folder else new_name + ".pdf"
+    new_path = os.path.join(PENDING_DIR, new_rel_path)
+
+    if os.path.exists(new_path):
+        flash("Un fichier avec ce nom existe déjà.")
+        return redirect(url_for("moderation"))
+
+    os.makedirs(os.path.dirname(new_path), exist_ok=True)
+
+    try:
+        shutil.move(old_path, new_path)
+        flash(f"Fichier modifié : {old_filename} → {new_rel_path}")
+    except Exception as e:
+        flash(f"Erreur lors du renommage : {e}")
+
+    return redirect(url_for("moderation"))
+
 @app.route("/logout")
 def logout():
     session.pop("moderateur", None)
@@ -123,4 +154,3 @@ def logout():
 
 if __name__ == "__main__":
     app.run(debug=True)
-
