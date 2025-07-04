@@ -6,7 +6,7 @@
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
 <body>
-    <h1>Interface de Modération</h1>
+    <h1>Modération des Fichiers PDF</h1>
 
     {% with messages = get_flashed_messages() %}
       {% if messages %}
@@ -22,21 +22,16 @@
     <ul>
         {% for fichier in fichiers_pending %}
             <li style="margin-bottom: 25px;">
-                <div>
-                    <strong>{{ fichier }}</strong>
-                    [<a href="{{ url_for('pending_file', filename=fichier) }}" target="_blank">Voir</a>]
-                    [<a href="{{ url_for('valider', filename=fichier) }}">Valider</a>]
-                    [<a href="{{ url_for('supprimer', filename=fichier) }}">Supprimer</a>]
-                </div>
-
-                <form method="POST" action="{{ url_for('modifier_fichier') }}" style="margin-top: 8px;">
+                <strong>{{ fichier }}</strong>
+                [<a href="{{ url_for('pending_file', filename=fichier) }}" target="_blank">Voir</a>]
+                [<a href="{{ url_for('valider', filename=fichier) }}">Valider</a>]
+                [<a href="{{ url_for('supprimer', filename=fichier) }}">🗑️ Supprimer</a>]
+                <form method="POST" action="{{ url_for('modifier_fichier') }}">
                     <input type="hidden" name="old_filename" value="{{ fichier }}">
-                    <label>
-                        Nouveau nom :
-                        <input type="text" name="new_name" placeholder="Nom sans .pdf" required>
+                    <label>Nouveau nom :
+                        <input type="text" name="new_name" required>
                     </label><br>
-                    <label>
-                        Dossier existant :
+                    <label>Dossier existant :
                         <select name="new_folder">
                             <option value="">-- Aucun / Racine --</option>
                             {% for d in dossiers %}
@@ -44,9 +39,8 @@
                             {% endfor %}
                         </select>
                     </label><br>
-                    <label>
-                        Nouveau dossier :
-                        <input type="text" name="new_folder_custom" placeholder="Créer un nouveau dossier">
+                    <label>Nouveau dossier :
+                        <input type="text" name="new_folder_custom">
                     </label><br>
                     <button type="submit">✏️ Renommer / Déplacer</button>
                 </form>
@@ -60,20 +54,16 @@
     <ul>
         {% for fichier in fichiers_valides %}
             <li style="margin-bottom: 25px;">
-                <div>
-                    <strong>{{ fichier }}</strong>
-                    [<a href="{{ url_for('pdf', filename=fichier) }}" target="_blank">Voir</a>]
-                </div>
-
-                <form method="POST" action="{{ url_for('modifier_fichier') }}" style="margin-top: 8px;">
+                <strong>{{ fichier }}</strong>
+                [<a href="{{ url_for('pdf', filename=fichier) }}" target="_blank">Voir</a>]
+                [<a href="{{ url_for('supprimer_valide', filename=fichier) }}">🗑️ Supprimer</a>]
+                <form method="POST" action="{{ url_for('modifier_fichier') }}">
                     <input type="hidden" name="old_filename" value="{{ fichier }}">
                     <input type="hidden" name="valid_file" value="1">
-                    <label>
-                        Nouveau nom :
-                        <input type="text" name="new_name" placeholder="Nom sans .pdf" required>
+                    <label>Nouveau nom :
+                        <input type="text" name="new_name" required>
                     </label><br>
-                    <label>
-                        Dossier existant :
+                    <label>Dossier existant :
                         <select name="new_folder">
                             <option value="">-- Aucun / Racine --</option>
                             {% for d in dossiers %}
@@ -81,9 +71,8 @@
                             {% endfor %}
                         </select>
                     </label><br>
-                    <label>
-                        Nouveau dossier :
-                        <input type="text" name="new_folder_custom" placeholder="Créer un nouveau dossier">
+                    <label>Nouveau dossier :
+                        <input type="text" name="new_folder_custom">
                     </label><br>
                     <button type="submit">✏️ Renommer / Déplacer</button>
                 </form>
@@ -93,7 +82,6 @@
         {% endfor %}
     </ul>
 
-    <br>
-    <a href="{{ url_for('logout') }}">🚪 Se déconnecter</a>
+    <br><a href="{{ url_for('logout') }}">🚪 Se déconnecter</a>
 </body>
 </html>
