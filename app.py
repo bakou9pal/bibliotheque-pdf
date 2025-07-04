@@ -15,7 +15,7 @@ PENDING_DIR = os.path.join(os.getcwd(), "uploads_pending")
 os.makedirs(PDF_DIR, exist_ok=True)
 os.makedirs(PENDING_DIR, exist_ok=True)
 
-# Tri naturel
+# Tri nature
 def trier_naturellement(nom):
     return [int(s) if s.isdigit() else s.lower() for s in re.split(r'(\d+)', nom)]
 
