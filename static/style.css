@@ -1,14 +1,18 @@
-/* Corps de la page */
+/* ---------------------- */
+/* Base & structure       */
+/* ---------------------- */
 body {
     background-color: #121212;
     color: #e0e0e0;
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    max-width: 800px;
+    max-width: 900px;
     margin: 50px auto;
     padding: 0 20px 50px;
 }
 
-/* Header en flex pour aligner logo + titre + nav */
+/* ---------------------- */
+/* Header & nav           */
+/* ---------------------- */
 header {
     display: flex;
     align-items: center;
@@ -18,7 +22,6 @@ header {
     flex-wrap: wrap;
 }
 
-/* Logo */
 header img {
     max-height: 80px;
     height: auto;
@@ -26,14 +29,12 @@ header img {
     box-shadow: 0 4px 12px rgba(0, 188, 212, 0.7);
 }
 
-/* Titre */
 h1 {
     color: #00bcd4;
     margin: 0;
     font-weight: 700;
 }
 
-/* Navigation */
 nav {
     width: 100%;
     text-align: center;
@@ -53,7 +54,9 @@ nav a:hover {
     text-decoration: underline;
 }
 
-/* Titres secondaires */
+/* ---------------------- */
+/* Titles & sections      */
+/* ---------------------- */
 h2 {
     color: #00acc1;
     border-bottom: 2px solid #007c91;
@@ -61,33 +64,123 @@ h2 {
     margin-top: 40px;
 }
 
-/* Listes */
+/* ---------------------- */
+/* List of files          */
+/* ---------------------- */
 ul {
     list-style-type: none;
     padding-left: 0;
 }
 
-/* Items de la liste */
 li {
     background-color: #1e1e1e;
-    margin-bottom: 10px;
-    padding: 12px 15px;
-    border-radius: 8px;
+    margin-bottom: 15px;
+    padding: 16px 20px;
+    border-radius: 10px;
     box-shadow: 0 2px 8px rgba(0, 188, 212, 0.3);
-    transition: background-color 0.3s ease;
+    transition: background-color 0.3s ease, transform 0.2s ease;
 }
 
 li:hover {
     background-color: #007c91;
+    transform: scale(1.01);
 }
 
-/* Liens */
+/* ---------------------- */
+/* Links and actions      */
+/* ---------------------- */
 a {
     color: #80deea;
     font-weight: 600;
     text-decoration: none;
+    margin-right: 10px;
 }
 
 a:hover {
     text-decoration: underline;
+    color: #00e5ff;
+}
+
+/* ---------------------- */
+/* Forms & Inputs         */
+/* ---------------------- */
+form {
+    margin-top: 12px;
+}
+
+input[type="text"],
+select {
+    background-color: #2b2b2b;
+    border: 1px solid #555;
+    color: #e0e0e0;
+    padding: 8px;
+    border-radius: 6px;
+    margin: 4px 0 10px;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+input[type="text"]::placeholder {
+    color: #aaa;
+}
+
+/* ---------------------- */
+/* Buttons                */
+/* ---------------------- */
+button {
+    background-color: #00bcd4;
+    color: #fff;
+    border: none;
+    padding: 8px 14px;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+    margin-top: 6px;
+}
+
+button:hover {
+    background-color: #0097a7;
+}
+
+/* ---------------------- */
+/* Flash messages         */
+/* ---------------------- */
+.flash {
+    background-color: #263238;
+    border-left: 5px solid #00bcd4;
+    padding: 12px 16px;
+    margin-bottom: 30px;
+    border-radius: 6px;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+}
+
+.flash li {
+    list-style: none;
+    margin: 0;
+    color: #e0f7fa;
+}
+
+/* ---------------------- */
+/* Responsive             */
+/* ---------------------- */
+@media (max-width: 600px) {
+    body {
+        padding: 0 10px;
+    }
+
+    header {
+        flex-direction: column;
+        align-items: center;
+    }
+
+    input,
+    select,
+    button {
+        width: 100%;
+    }
+
+    nav a {
+        display: block;
+        margin: 8px 0;
+    }
 }
